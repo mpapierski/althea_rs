@@ -1,7 +1,7 @@
 import React, { Component } from "react";
-import logo from "./logo.svg";
+import logo from "./CascadianMesh.png";
 import "./App.css";
-import { Button } from "reactstrap";
+import { Button, Table } from "reactstrap";
 
 const statServer = "http://127.0.0.1:8080/mock.json";
 
@@ -32,14 +32,39 @@ class App extends Component {
       <div className="App">
         <header className="App-header">
           <img src={logo} className="App-logo" alt="logo" />
-          <h1 className="App-title">Welcome to React</h1>
+          <h1 className="App-title">CascadianMesh hypothetical balances</h1>
         </header>
-        <p className="App-intro">
-          To get started, edit <code>src/App.js</code> and save to reload.
-        </p>
-        <Button color="danger">
-          <h2>It is {JSON.stringify(this.state.nodes)}.</h2>
-        </Button>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          <Table
+            striped
+            style={{ textAlign: "left", maxWidth: 600, marginTop: 50 }}
+          >
+            <thead>
+              <tr>
+                <th>IP address</th>
+                <th>MAC address</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {this.state.nodes.map((node, i) => (
+                <tr key={i}>
+                  <td>
+                    <b>{node.ip}</b>
+                  </td>
+                  <td>{node.mac}</td>
+                  <td>{node.balance}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
       </div>
     );
   }
