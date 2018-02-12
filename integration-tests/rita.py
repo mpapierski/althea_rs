@@ -8,7 +8,7 @@ from termcolor import colored
 import signal
 
 network_lab = os.path.join(os.path.dirname(__file__), "deps/network-lab/network-lab.sh")
-babeld = os.path.join(os.path.dirname(__file__), "deps/babeld/babeld")
+babeld = os.path.join(os.path.dirname(__file__), "babeld/babeld")
 rita = os.path.join(os.path.dirname(__file__), "../target/debug/rita")
 bounty = os.path.join(os.path.dirname(__file__), "../target/debug/bounty_hunter")
 ping6 = os.getenv('PING6', "ping6")
