@@ -56,6 +56,7 @@ mod rita_common;
 mod rita_client;
 
 use rita_common::network_endpoints::{hello_response, make_payments};
+use rita_client::dashboard::network_endpoints::{get_wifi_config, set_wifi_config};
 
 const USAGE: &str = "
 Usage: rita_common --config <settings> --default <default> --platform <platform>
@@ -103,8 +104,12 @@ fn main() {
 
     HttpServer::new(|| {
         Application::new()
+            // rita
             .resource("/make_payment", |r| r.h(make_payments))
             .resource("/hello", |r| r.h(hello_response))
+            // dashboard
+            .resource("/wifisettings", |r| r.route().filter(pred::Get()).h(get_wifi_config))
+            .resource("/wifisettings", |r| r.route().filter(pred::Post()).h(set_wifi_config))
     }).bind(format!(
         "[::0]:{}",
         SETTING.read().unwrap().network.rita_port

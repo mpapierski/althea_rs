@@ -49,9 +49,9 @@ class Node:
         return interfaces
 
     def get_veth_interfaces(self):
-        interfaces = ""
+        interfaces = []
         for i in self.neighbors:
-            interfaces += "veth-{}-{} ".format(self.id, i)
+            interfaces.append("veth-{}-{}".format(self.id, i))
         return interfaces
 
 
@@ -119,12 +119,14 @@ def save_rita_settings(id, x):
     toml.dump(x, open("rita-settings-n{}.toml".format(id), "w"))
 
 
-def start_rita(id):
+def start_rita(node):
+    id = node.id
     settings = get_rita_defaults()
     settings["network"]["own_ip"] = "fd::{}".format(id)
     settings["network"]["wg_private_key_path"] = "{pwd}/private-key-{id}".format(id=id, pwd=dname)
     settings["network"]["wg_private_key"] = get_wg_private_key()
     settings["network"]["wg_public_key"] = get_wg_public_key(settings["network"]["wg_private_key"])
+    settings["network"]["listen_interfaces"] = node.get_veth_interfaces()
     save_rita_settings(id, settings)
     time.sleep(0.1)
     os.system(
@@ -134,12 +136,14 @@ def start_rita(id):
                                                                               pwd=dname))
 
 
-def start_rita_exit(id):
+def start_rita_exit(node):
+    id = node.id
     settings = get_rita_exit_defaults()
     settings["network"]["own_ip"] = "fd::{}".format(id)
     settings["network"]["wg_private_key_path"] = "{pwd}/private-key-{id}".format(id=id, pwd=dname)
     settings["network"]["wg_private_key"] = get_wg_private_key()
     settings["network"]["wg_public_key"] = get_wg_public_key(settings["network"]["wg_private_key"])
+    settings["network"]["listen_interfaces"] = node.get_veth_interfaces()
     save_rita_settings(id, settings)
     time.sleep(0.1)
     os.system(
@@ -247,13 +251,13 @@ class World:
         time.sleep(1)
 
         print("starting rita")
-        for id in self.nodes:
+        for id, node in self.nodes.items():
             if id == self.exit:
-                start_rita_exit(id)
+                start_rita_exit(node)
             elif id == self.external:
                 pass
             else:
-                start_rita(id)
+                start_rita(node)
             time.sleep(0.2)
         print("rita started")
 

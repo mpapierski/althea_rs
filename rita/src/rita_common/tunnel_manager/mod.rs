@@ -1,6 +1,6 @@
 use std::net::{IpAddr, SocketAddr, SocketAddrV6};
 use std::path::Path;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use actix::prelude::*;
 
@@ -47,6 +47,7 @@ pub struct TunnelManager {
     pub port: u16,
 
     tunnel_map: HashMap<IpAddr, TunnelData>,
+    listen_interfaces: HashSet<String>,
 }
 
 impl Actor for TunnelManager {
@@ -56,12 +57,55 @@ impl Supervised for TunnelManager {}
 impl SystemService for TunnelManager {
     fn service_started(&mut self, _ctx: &mut Context<Self>) {
         info!("Tunnel manager started");
+
+        for i in SETTING.read().unwrap().network.listen_interfaces.clone() {
+            self.listen_interfaces.insert(i);
+        }
+        trace!("Loaded listen interfaces {:?}", self.listen_interfaces);
     }
 }
 
 impl Default for TunnelManager {
     fn default() -> TunnelManager {
         TunnelManager::new()
+    }
+}
+
+pub struct Listen(pub String);
+impl Message for Listen {
+    type Result = ();
+}
+
+impl Handler<Listen> for TunnelManager {
+    type Result = ();
+
+    fn handle(&mut self, listen: Listen, _: &mut Context<Self>) -> Self::Result {
+        self.listen_interfaces.insert(listen.0);
+    }
+}
+
+pub struct UnListen(pub String);
+impl Message for UnListen {
+    type Result = ();
+}
+
+impl Handler<UnListen> for TunnelManager {
+    type Result = ();
+
+    fn handle(&mut self, un_listen: UnListen, _: &mut Context<Self>) -> Self::Result {
+        self.listen_interfaces.remove(&un_listen.0);
+    }
+}
+
+pub struct GetListen;
+impl Message for GetListen {
+    type Result = Result<HashSet<String>, Error>;
+}
+
+impl Handler<GetListen> for TunnelManager {
+    type Result = Result<HashSet<String>, Error>;
+    fn handle(&mut self, _: GetListen, _: &mut Context<Self>) -> Self::Result {
+        Ok(self.listen_interfaces.clone())
     }
 }
 
@@ -121,6 +165,7 @@ impl TunnelManager {
             ki: KernelInterface {},
             tunnel_map: HashMap::new(),
             port: SETTING.read().unwrap().network.wg_start_port,
+            listen_interfaces: HashSet::new(),
         }
     }
 
@@ -159,7 +204,9 @@ impl TunnelManager {
                         ip_address,
                         mac_address
                     );
-                    if &dev[..2] != "wg" && is_link_local(ip_address) {
+                    if &dev[..2] != "wg" && is_link_local(ip_address)
+                        && self.listen_interfaces.contains(dev)
+                    {
                         {
                             Some(Box::new(self.neighbor_inquiry(ip_address, dev).then(|res| {
                                 match res {

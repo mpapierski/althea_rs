@@ -50,7 +50,7 @@ pub struct NetworkSettings {
     pub wg_private_key_path: String,
     pub wg_public_key: String,
     pub wg_start_port: u16,
-    pub babel_interfaces: String,
+    pub listen_interfaces: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

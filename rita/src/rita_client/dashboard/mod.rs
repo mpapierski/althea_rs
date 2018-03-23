@@ -1,0 +1,117 @@
+use actix::prelude::*;
+use althea_kernel_interface::KernelInterface;
+
+use failure::Error;
+
+use serde_json;
+use serde_json::Value;
+
+use rita_common::tunnel_manager::{GetListen, Listen, TunnelManager, UnListen};
+
+use futures;
+use futures::Future;
+
+pub mod network_endpoints;
+
+struct Dashboard;
+
+impl Actor for Dashboard {
+    type Context = Context<Self>;
+}
+
+impl Supervised for Dashboard {}
+impl SystemService for Dashboard {
+    fn service_started(&mut self, _ctx: &mut Context<Self>) {
+        info!("Dashboard started");
+    }
+}
+
+impl Default for Dashboard {
+    fn default() -> Dashboard {
+        Dashboard {}
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct WifiInterface {
+    #[serde(default)]
+    pub section_name: String,
+    pub device: String,
+    pub network: String,
+    #[serde(default)]
+    pub mesh: bool,
+    pub ssid: String,
+    pub encryption: String,
+    pub key: String,
+}
+
+struct GetWifiConfig;
+
+impl Message for GetWifiConfig {
+    type Result = Result<Vec<WifiInterface>, Error>;
+}
+
+impl Handler<GetWifiConfig> for Dashboard {
+    type Result = ResponseFuture<Vec<WifiInterface>, Error>;
+
+    fn handle(&mut self, msg: GetWifiConfig, ctx: &mut Self::Context) -> Self::Result {
+        Box::new(
+            TunnelManager::from_registry()
+                .send(GetListen {})
+                .and_then(|res| {
+                    let res = res.unwrap();
+                    let ki = KernelInterface {};
+                    let mut interfaces = Vec::new();
+
+                    let config = ki.ubus_call("uci.get", "{ \"package\": \"wireless\"}")
+                        .unwrap();
+
+                    let val: Value = serde_json::from_str(&config).unwrap();
+
+                    for (k, v) in val["package"].as_object().unwrap().iter() {
+                        if v[".type"] == "wifi-iface" {
+                            let mut interface: WifiInterface =
+                                serde_json::from_value(v[".type"].clone()).unwrap();
+                            interface.mesh = res.contains(&interface.device);
+                            interface.section_name = k.clone();
+                            interfaces.push(interface);
+                        }
+                    }
+
+                    futures::future::ok(interfaces)
+                })
+                .from_err(),
+        )
+    }
+}
+
+struct SetWifiConfig(Vec<WifiInterface>);
+
+impl Message for SetWifiConfig {
+    type Result = Result<(), Error>;
+}
+
+impl Handler<SetWifiConfig> for Dashboard {
+    type Result = Result<(), Error>;
+
+    fn handle(&mut self, msg: SetWifiConfig, ctx: &mut Self::Context) -> Self::Result {
+        let ki = KernelInterface {};
+
+        for i in msg.0 {
+            if i.mesh {
+                TunnelManager::from_registry().do_send(Listen(i.device.clone()))
+            } else {
+                TunnelManager::from_registry().do_send(UnListen(i.device.clone()))
+            }
+
+            ki.set_uci_var(&format!("wireless.{}.ssid", i.section_name), &i.ssid)?;
+            ki.set_uci_var(
+                &format!("wireless.{}.encryption", i.section_name),
+                &i.encryption,
+            )?;
+            ki.set_uci_var(&format!("wireless.{}.key", i.section_name), &i.key)?;
+        }
+
+        Ok(())
+    }
+}
