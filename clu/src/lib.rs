@@ -26,6 +26,7 @@ use std::thread;
 use settings::ExitClientDetails;
 use althea_types::LocalIdentity;
 use std::time::Duration;
+use std::path::Path;
 
 extern crate althea_types;
 
@@ -64,6 +65,8 @@ fn openwrt_generate_and_set_wg_keys(
     //Mutates settings, intentional side effect
     SETTINGS.write().unwrap().network.wg_private_key = wg_private_key.to_string();
     SETTINGS.write().unwrap().network.wg_public_key = wg_public_key.to_string();
+    //Creates file on disk containing key
+    ki.create_wg_key(&Path::new(&SETTINGS.read().unwrap().network.wg_private_key_path), wg_private_key);
 
     Ok(())
 }
