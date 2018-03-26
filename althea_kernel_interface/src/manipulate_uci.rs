@@ -42,33 +42,6 @@ impl KernelInterface {
         Ok(true)
     }
 
-    //Sets an arbitrary UCI list on OpenWRT
-    pub fn set_uci_list(&self, key: &str, value: &[&str]) -> Result<bool, Error> {
-        self.del_uci_var(&key)?;
-        for v in value {
-            let output = self.run_command("uci", &["add_list", &key, "=", &v])?;
-            if !output.stderr.is_empty() {
-                return Err(KernelManagerError::RuntimeError(format!(
-                    "recieved error while setting UCI: {}",
-                    String::from_utf8(output.stderr)?
-                )).into());
-            }
-        }
-        Ok(true)
-    }
-
-    //Deletes an arbitrary UCI variable on OpenWRT
-    pub fn del_uci_var(&self, key: &str) -> Result<bool, Error> {
-        let output = self.run_command("uci", &["delete", &key])?;
-        if !output.stderr.is_empty() {
-            return Err(KernelManagerError::RuntimeError(format!(
-                "recieved error while setting UCI: {}",
-                String::from_utf8(output.stderr)?
-            )).into());
-        }
-        Ok(true)
-    }
-
     //Retrieves the value of a given UCI path, could be one or multiple values
     pub fn get_uci_var(&self, key: &str) -> Result<String, Error> {
         let output = self.run_command("uci", &["show", &key])?;

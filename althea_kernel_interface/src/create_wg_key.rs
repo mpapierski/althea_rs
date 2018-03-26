@@ -10,7 +10,7 @@ use failure::Error;
 impl KernelInterface {
     pub fn create_wg_key(&self, path: &Path, private_key :&String) -> Result<(), Error> {
         if path.exists() {
-            panic!("System private key in {:?} is not configured in settings! Please add it", path);
+            warn!("System private key exists in {:?}", path);
         } else {
             trace!("File does not exist, creating");
             let mut priv_key_file = File::create(path)?;
