@@ -66,23 +66,6 @@ class Connection:
             self.b = self.a
             self.a = t
 
-
-def get_wg_private_key():
-    proc = subprocess.Popen(["wg", "genkey"], stdout=subprocess.PIPE)
-    key = proc.stdout.read()
-    print(key[0:44])
-    return key[0:44].decode("utf-8")
-
-
-def get_wg_public_key(private_key):
-    proc = subprocess.Popen(["wg", "pubkey"], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-    proc.stdin.write(private_key.encode('utf-8'))
-    proc.stdin.close()
-    key = proc.stdout.read()
-    print(key[0:44])
-    return key[0:44].decode("utf-8")
-
-
 def prep_netns(id):
     os.system("ip netns exec netlab-{} sysctl -w net.ipv4.ip_forward=1".format(id))
     os.system("ip netns exec netlab-{} sysctl -w net.ipv6.conf.all.forwarding=1".format(id))
@@ -123,8 +106,6 @@ def start_rita(id):
     settings = get_rita_defaults()
     settings["network"]["own_ip"] = "fd::{}".format(id)
     settings["network"]["wg_private_key_path"] = "{pwd}/private-key-{id}".format(id=id, pwd=dname)
-    settings["network"]["wg_private_key"] = get_wg_private_key()
-    settings["network"]["wg_public_key"] = get_wg_public_key(settings["network"]["wg_private_key"])
     save_rita_settings(id, settings)
     time.sleep(0.1)
     os.system(
@@ -138,8 +119,6 @@ def start_rita_exit(id):
     settings = get_rita_exit_defaults()
     settings["network"]["own_ip"] = "fd::{}".format(id)
     settings["network"]["wg_private_key_path"] = "{pwd}/private-key-{id}".format(id=id, pwd=dname)
-    settings["network"]["wg_private_key"] = get_wg_private_key()
-    settings["network"]["wg_public_key"] = get_wg_public_key(settings["network"]["wg_private_key"])
     save_rita_settings(id, settings)
     time.sleep(0.1)
     os.system(
