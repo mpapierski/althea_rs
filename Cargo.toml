@@ -3,11 +3,8 @@ name = "althea_rs"
 version = "0.1.0"
 authors = ["Stan Drozd <drozdziak1@gmail.com>"]
 
-[dependencies]
-rita = { path = "./rita" }
-
 [workspace]
-members = ["althea_kernel_interface", "bounty_hunter", "settings", "clu", "exit_db"]
+members = ["althea_kernel_interface", "bounty_hunter", "settings", "clu", "exit_db", "rita"]
 
 [profile.release]
 opt-level = "s"

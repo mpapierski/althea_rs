@@ -261,7 +261,7 @@ fn openwrt_init(
     let mesh_ip = SETTINGS.read().unwrap().network.own_ip.clone();
     let our_exit_ip = SETTINGS.read().unwrap().exit_client.exit_ip.clone();
 
-    if !validate_wg_key(&privkey) || validate_wg_key(&pubkey) {
+    if !validate_wg_key(&privkey) || !validate_wg_key(&pubkey) {
         openwrt_generate_and_set_wg_keys(SETTINGS.clone()).expect("failed to generate wg keys");
     }
     if !validate_mesh_ip(&mesh_ip) {
@@ -313,7 +313,7 @@ fn linux_init(
     let mesh_ip = SETTINGS.read().unwrap().network.own_ip.clone();
     let our_exit_ip = SETTINGS.read().unwrap().exit_client.exit_ip.clone();
 
-    if !validate_wg_key(&privkey) || validate_wg_key(&pubkey) {
+    if !validate_wg_key(&privkey) || !validate_wg_key(&pubkey) {
         linux_generate_wg_keys(SETTINGS.clone()).expect("failed to generate wg keys");
     }
     if !validate_mesh_ip(&mesh_ip) {

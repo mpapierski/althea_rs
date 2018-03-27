@@ -10,7 +10,14 @@ use failure::Error;
 impl KernelInterface {
     pub fn create_wg_key(&self, path: &Path, private_key :&String) -> Result<(), Error> {
         if path.exists() {
-            panic!("System private key already exists in {:?}", path);
+            let mut f = File::open(path)?;
+
+            let mut contents = String::new();
+            f.read_to_string(&mut contents)?;
+
+            if &contents != private_key {
+                panic!("Different system private key already exists in {:?}", path);
+            }
             Ok(())
         } else {
             trace!("File does not exist, creating");
