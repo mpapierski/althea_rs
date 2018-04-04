@@ -7,7 +7,13 @@ authors = ["Stan Drozd <drozdziak1@gmail.com>"]
 members = ["althea_kernel_interface", "bounty_hunter", "settings", "clu", "exit_db", "rita"]
 
 [profile.release]
-opt-level = "s"
+opt-level = "z"
+lto = true
+codegen-units = 1
+incremental = false
+
+[profile.dev]
+opt-level = "z"
 debug = true
 
 [features]
