@@ -12,7 +12,8 @@ use babel_monitor::Babel;
 use num256::Int256;
 use rita_common::dashboard::Dashboard;
 use rita_common::debt_keeper::{DebtKeeper, Dump};
-use rita_common::tunnel_manager::{Listen, TunnelManager, UnListen};
+use rita_common::peer_listener::PeerListener;
+use rita_common::peer_listener::{Listen, UnListen};
 use settings::ExitServer;
 use settings::RitaClientSettings;
 use settings::RitaCommonSettings;
@@ -124,23 +125,23 @@ impl Handler<SetWifiConfig> for Dashboard {
             let iface_number = i.section_name.clone().chars().last();
 
             if i.mesh && iface_number.is_some() {
-                let iface_name = format!("rita_wlan{}", iface_number.unwrap());
+                let iface_name = format!("wlan{}", iface_number.unwrap());
 
-                TunnelManager::from_registry().do_send(Listen(iface_name.clone()));
+                PeerListener::from_registry().do_send(Listen(iface_name.clone()));
                 KI.set_uci_var(&format!("wireless.{}.ssid", i.section_name), "AltheaMesh")?;
                 KI.set_uci_var(&format!("wireless.{}.encryption", i.section_name), "none")?;
                 KI.set_uci_var(&format!("wireless.{}.mode", i.section_name), "adhoc")?;
                 KI.set_uci_var(&format!("wireless.{}.network", i.section_name), &iface_name)?;
-                KI.set_uci_var(&format!("network.{}", iface_name.clone()), "interface")?;
+                KI.set_uci_var(&format!("network.rita_{}", iface_name.clone()), "interface")?;
                 KI.set_uci_var(
                     &format!("network.{}.ifname", iface_name.clone()),
                     &iface_name,
                 )?;
                 KI.set_uci_var(&format!("network.{}.proto", iface_name.clone()), "static")?;
             } else if iface_number.is_some() {
-                let iface_name = format!("rita_wlan{:?}", iface_number);
+                let iface_name = format!("wlan{}", iface_number.unwrap());
 
-                TunnelManager::from_registry().do_send(UnListen(iface_name));
+                PeerListener::from_registry().do_send(UnListen(iface_name));
                 KI.set_uci_var(&format!("wireless.{}.ssid", i.section_name), &i.ssid)?;
                 KI.set_uci_var(
                     &format!("wireless.{}.encryption", i.section_name),
@@ -344,7 +345,7 @@ impl Handler<ResetExit> for Dashboard {
     fn handle(&mut self, msg: ResetExit, _ctx: &mut Self::Context) -> Self::Result {
         let mut exits = SETTING.get_exits_mut();
 
-        if let Some(mut exit) = exits.get_mut(&msg.0) {
+        if let Some(exit) = exits.get_mut(&msg.0) {
             info!("Changing exit {:?} state to New", msg.0);
             exit.info = ExitState::New;
         } else {
