@@ -21,13 +21,13 @@ matrix:
     - rust: beta
     - rust: nightly
   include:
-    - name: "Code format"
+    - name: "cargo fmt"
       script: rustup component add rustfmt-preview --toolchain nightly && cargo fmt --all -- --check
     - name: "Cross compile on MIPS"
       script: ./integration-tests/cross-build.sh
-    - name: Integration
-      script: INITIAL_POLL_INTERVAL=5 BACKOFF_FACTOR="1.5" VERBOSE=1 ./integration-tests/rita.sh
-    - name: Integration
-      script: REVISION_B=release COMPAT_LAYOUT="inner_ring_old" INITIAL_POLL_INTERVAL=5 BACKOFF_FACTOR="1.5" VERBOSE=1 ./integration-tests/rita.sh
-    - name: Integration
-      script: REVISION_B=master COMPAT_LAYOUT="inner_ring_old" INITIAL_POLL_INTERVAL=5 BACKOFF_FACTOR="1.5" VERBOSE=1 ./integration-tests/rita.sh
+    - script: ./integration-tests/rita.sh
+      env: INITIAL_POLL_INTERVAL=5 BACKOFF_FACTOR="1.5" VERBOSE=1
+    - script: ./integration-tests/rita.sh
+      env: REVISION_B=release COMPAT_LAYOUT="inner_ring_old" INITIAL_POLL_INTERVAL=5 BACKOFF_FACTOR="1.5" VERBOSE=1
+    - script: ./integration-tests/rita.sh
+      env: REVISION_B=master COMPAT_LAYOUT="inner_ring_old" INITIAL_POLL_INTERVAL=5 BACKOFF_FACTOR="1.5" VERBOSE=1
