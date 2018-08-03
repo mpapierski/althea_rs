@@ -22,6 +22,11 @@ rust:
 script:
   - (eval "$TEST_COMMAND")
 matrix:
+  allow_failures:
+    - rust:
+      - beta
+      - nightly
+    - env: TEST_COMMAND="./integration-tests/cross-build.sh"
   exclude:
   - rust: stable
     env: TEST_COMMAND="rustup component add rustfmt-preview --toolchain nightly && cargo fmt --all -- --check"
