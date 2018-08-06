@@ -273,7 +273,13 @@ fn encode_im_here(addr: Ipv6Addr) -> Vec<u8> {
     buf
 }
 
-fn decode_im_here(buf: &mut Vec<u8>) -> Result<Option<Ipv6Addr>, io::Error> {
+#[test]
+fn test_encode_im_here() {
+    let data = encode_im_here(Ipv6Addr::new(0, 0, 0, 0, 0, 0xffff, 0xc00a, 0x2ff));
+    assert_eq!(data, vec![91, 109, 65, 88, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 10, 2, 255]);
+}
+
+fn decode_im_here(buf: &Vec<u8>) -> Result<Option<Ipv6Addr>, io::Error> {
     trace!("Starting ImHere packet decode!");
     if buf.is_empty() {
         trace!("Recieved an empty ImHere packet!");
@@ -325,6 +331,33 @@ fn decode_im_here(buf: &mut Vec<u8>) -> Result<Option<Ipv6Addr>, io::Error> {
     Ok(Some(peer_address))
 }
 
+#[test]
+fn test_decode_imhere() {
+    let result = decode_im_here(&vec![91, 109, 65, 88, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 10, 2, 255]);
+    assert_eq!(result.expect("Unable to decode"), Some(Ipv6Addr::new(0, 0, 0, 0, 0, 0xffff, 0xc00a, 0x2ff)));
+}
+
+#[test]
+fn test_decode_imhere_with_empty_buf() {
+    let result = decode_im_here(&vec![] as &Vec<u8>);
+    assert_eq!(result.expect("Unable to decode"), None);
+}
+
+#[test]
+fn test_decode_imhere_with_wrong_magic() {
+    let result = decode_im_here(&vec![1, 2, 3, 4]);
+    assert_eq!(result.expect("Unable to decode"), None);
+}
+
+#[test]
+fn test_decode_imhere_with_multicast_interface() {
+    let multicast_addr = Ipv6Addr::new(0xff00, 0xde, 0xad, 0xbe, 0xef, 0xb4, 0xdc, 0x0d);
+    assert!(multicast_addr.is_multicast());
+    let data = encode_im_here(multicast_addr);
+    let result = decode_im_here(&data);
+    assert_eq!(result.expect("Unable to decode address"), None);
+}
+
 fn send_imhere(interfaces: &mut Vec<ListenInterface>) -> Result<(), Error> {
     trace!("About to send ImHere");
     for listen_interface in interfaces.iter_mut() {
@@ -361,7 +394,7 @@ fn recieve_imhere(interfaces: &mut Vec<ListenInterface>) -> Result<Vec<Peer>, Er
                 continue;
             }
 
-            let res = decode_im_here(&mut datagram.to_vec());
+            let res = decode_im_here(&datagram.to_vec());
             if res.is_err() {
                 trace!("ImHere decode failed!");
                 continue;
