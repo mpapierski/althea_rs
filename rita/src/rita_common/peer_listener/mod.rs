@@ -276,7 +276,10 @@ fn encode_im_here(addr: Ipv6Addr) -> Vec<u8> {
 #[test]
 fn test_encode_im_here() {
     let data = encode_im_here(Ipv6Addr::new(0, 0, 0, 0, 0, 0xffff, 0xc00a, 0x2ff));
-    assert_eq!(data, vec![91, 109, 65, 88, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 10, 2, 255]);
+    assert_eq!(
+        data,
+        vec![91, 109, 65, 88, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 10, 2, 255]
+    );
 }
 
 fn decode_im_here(buf: &Vec<u8>) -> Result<Option<Ipv6Addr>, io::Error> {
@@ -333,8 +336,13 @@ fn decode_im_here(buf: &Vec<u8>) -> Result<Option<Ipv6Addr>, io::Error> {
 
 #[test]
 fn test_decode_imhere() {
-    let result = decode_im_here(&vec![91, 109, 65, 88, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 10, 2, 255]);
-    assert_eq!(result.expect("Unable to decode"), Some(Ipv6Addr::new(0, 0, 0, 0, 0, 0xffff, 0xc00a, 0x2ff)));
+    let result = decode_im_here(&vec![
+        91, 109, 65, 88, 0, 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 10, 2, 255,
+    ]);
+    assert_eq!(
+        result.expect("Unable to decode"),
+        Some(Ipv6Addr::new(0, 0, 0, 0, 0, 0xffff, 0xc00a, 0x2ff))
+    );
 }
 
 #[test]
