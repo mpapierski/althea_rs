@@ -418,3 +418,9 @@ impl TunnelManager {
         }
     }
 }
+
+#[test]
+pub fn test_tunnel_manager() {
+    let mut tunnel_manager = TunnelManager::new();
+    assert_eq!(tunnel_manager.get_port(), 65499);
+}
