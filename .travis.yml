@@ -1,10 +1,29 @@
 language: rust
 cache: cargo
+
+addons:
+  apt:
+    sources:
+      - sourceline: 'ppa:wireguard/wireguard'
+    packages:
+      - libsqlite3-dev
+      - iperf3
+      - python3-pip
+      - bridge-utils
+      - wireguard
+      - linux-source
+      - curl
+      - git
+      - libssl-dev
+      - pkg-config
+      - build-essential
+      - ipset
+    update: true
+    config:
+      retries: true
+
 before_install:
-  - sudo add-apt-repository ppa:wireguard/wireguard -y
-  - sudo add-apt-repository universe
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libsqlite3-dev iperf3 python3-pip bridge-utils wireguard linux-source linux-headers-$(uname -r) curl git libssl-dev pkg-config build-essential ipset
+  - sudo apt-get install -y linux-headers-$(uname -r)
   - which diesel || cargo install diesel_cli --no-default-features --features sqlite
   - sudo cp $(which diesel) /usr/bin
 env:
